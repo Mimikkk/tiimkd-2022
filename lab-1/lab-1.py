@@ -10,10 +10,8 @@ from string import digits
 alphabet_weights = Counter(' abcdefghijklmnopqrstuvwxyz')
 def readfile(filename: Literal['hamlet', 'romeo', 'wiki_sample']):
   with open(f"resources/norm_{filename}.txt") as file:
-    text = file.read()
-    text = text.translate(str.maketrans('', '', digits))
-    text = re.sub(' +', ' ', text)
-    return text
+    return file.read()
+
 
 def average_length(text: str):
   words = text.split(' ')
