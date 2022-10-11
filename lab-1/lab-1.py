@@ -24,18 +24,18 @@ def normalize(weights: dict):
 
 def calculate_conditional_weights(text: str, n: int):
   conditional_weights = {}
-  n_gram_plus_one_weights = create_ngrams(text, n + 1)
-  n_gram_weights = create_ngrams(text, n)
+  ngrams = create_ngrams(text, n)
+  next_ngrams = create_ngrams(text, n + 1)
 
-  for gram in n_gram_weights:
-    conditional_weights[gram] = {}
+  for ngram in ngrams:
+    conditional_weights[ngram] = {}
 
     for letter in alphabet_weights:
-      new_key = gram + letter
+      new_key = ngram + letter
 
-      if new_key in n_gram_plus_one_weights:
-        conditional_weights[gram][letter] = n_gram_plus_one_weights[new_key] / n_gram_weights[gram]
-    normalize(conditional_weights[gram])
+      if new_key in next_ngrams:
+        conditional_weights[ngram][letter] = next_ngrams[new_key] / ngrams[ngram]
+    normalize(conditional_weights[ngram])
 
   return conditional_weights
 
