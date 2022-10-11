@@ -75,7 +75,7 @@ if __name__ == '__main__':
   conditional_weights = calculate_conditional_weights(text, 1)
   for (letter, _) in common: print(f"Weights after {letter}: \n{conditional_weights[letter]}")
 
-  print("Markov approximations")
+  print("5. Markov approximations.")
   for degree in [1, 3, 5]:
     print(f"{degree=}")
 
