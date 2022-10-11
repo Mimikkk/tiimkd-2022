@@ -52,15 +52,18 @@ def create_markov_chain_sentences(n: int, degree: int, start: str, weights: dict
   return result
 
 if __name__ == '__main__':
+  print()
   print("1. Zero degree.")
   gibberish_text = ''.join(generate_letters(n=10000, weights=alphabet_weights))
   print(f"Average gibberish word length: {average_length(gibberish_text)}")
 
   text = readfile('hamlet')
 
+  print()
   print("2. Letter weights.")
   print(create_ngrams(text, 1))
 
+  print()
   print("3. First degree.")
   weights = create_ngrams(text, 1)
   first_degree_text = ''.join(generate_letters(n=10000, weights=weights))
@@ -68,6 +71,7 @@ if __name__ == '__main__':
   print(f'Generated average word length: {average_length(first_degree_text)}')
   print(f'Original average word length: {average_length(text)}')
 
+  print()
   print("4. Conditional weigths of letters.")
   common = Counter(text).most_common(2)
   print(f"Most common: {common}")
@@ -75,12 +79,14 @@ if __name__ == '__main__':
   conditional_weights = calculate_conditional_weights(text, 1)
   for (letter, _) in common: print(f"Weights after {letter}: \n{conditional_weights[letter]}")
 
+  print()
   print("5. Markov approximations.")
   for degree in [1, 3, 5]:
-    print(f"{degree=}")
+    print(f"- degree: {degree}")
 
     weights = calculate_conditional_weights(text, degree)
     n_degree_text = create_markov_chain_sentences(n=10000, degree=degree, start='probability', weights=weights)
 
     print(f"Generated text: {n_degree_text}")
     print(f"Average word length: {average_length(n_degree_text)}")
+    print()

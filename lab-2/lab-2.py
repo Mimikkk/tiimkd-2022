@@ -72,7 +72,7 @@ if __name__ == '__main__':
   words: Counter[str] = create_ngram_probabilities(wiki_sample_text, 0)
   print(f"Total unique words: {len(words)}")
   print(f"Which makes up {len(words) / words.total() * 100:.2f}% of all words")
-  print(f"10 Most common words: {words.most_common(10)}")
+  print(f"10 Most common words: {', '.join(map(ith(1), words.most_common(10)))}")
   print(f"30k Percentage of total: {sum(map(ith(2), words.most_common(30_000))) / words.total() * 100:.2f}%")
   print(f"6k Percentage of total: {sum(map(ith(2), words.most_common(6_000))) / words.total() * 100:.2f}%")
 
