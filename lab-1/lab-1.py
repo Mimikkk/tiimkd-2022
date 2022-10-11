@@ -14,18 +14,18 @@ def average_length(text: str):
 def generate_letters(n: int, weights: dict):
   return random.choices(tuple(weights), weights=weights.values(), k=n)
 
-def create_weights(text: str, n: int = 1):
-  return normalize_weights(Counter(text[i:i + n] for i in range(len(text) - n + 1)))
+def create_ngrams(text: str, n: int = 1):
+  return normalize(Counter(text[i:i + n] for i in range(len(text) - n + 1)))
 
-def normalize_weights(weights: dict):
+def normalize(weights: dict):
   total = sum(weights.values())
   for key in weights: weights[key] /= total
   return weights
 
 def calculate_conditional_weights(text: str, n: int):
   conditional_weights = {}
-  n_gram_plus_one_weights = create_weights(text, n + 1)
-  n_gram_weights = create_weights(text, n)
+  n_gram_plus_one_weights = create_ngrams(text, n + 1)
+  n_gram_weights = create_ngrams(text, n)
 
   for gram in n_gram_weights:
     conditional_weights[gram] = {}
@@ -35,7 +35,7 @@ def calculate_conditional_weights(text: str, n: int):
 
       if new_key in n_gram_plus_one_weights:
         conditional_weights[gram][letter] = n_gram_plus_one_weights[new_key] / n_gram_weights[gram]
-    normalize_weights(conditional_weights[gram])
+    normalize(conditional_weights[gram])
 
   return conditional_weights
 
@@ -59,10 +59,10 @@ if __name__ == '__main__':
   text = readfile('hamlet')
 
   print("2. Letter weights.")
-  print(create_weights(text, 1))
+  print(create_ngrams(text, 1))
 
   print("3. First degree.")
-  weights = create_weights(text, 1)
+  weights = create_ngrams(text, 1)
   first_degree_text = ''.join(generate_letters(n=10000, weights=weights))
 
   print(f'Generated average word length: {average_length(first_degree_text)}')
