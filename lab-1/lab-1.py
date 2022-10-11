@@ -56,7 +56,7 @@ if __name__ == '__main__':
   gibberish_text = ''.join(generate_letters(n=10000, weights=alphabet_weights))
   print(f"Average gibberish word length: {average_length(gibberish_text)}")
 
-  text = readfile('wiki_sample')
+  text = readfile('hamlet')
 
   print("2. Letter weights.")
   print(create_weights(text, 1))
