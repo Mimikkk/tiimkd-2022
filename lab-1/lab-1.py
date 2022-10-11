@@ -1,17 +1,11 @@
-from collections import Counter, defaultdict
+from collections import Counter
 import random
-import re
-import operator
 from typing import Literal
-
-import numpy as np
-from string import digits
 
 alphabet_weights = Counter(' abcdefghijklmnopqrstuvwxyz')
 def readfile(filename: Literal['hamlet', 'romeo', 'wiki_sample']):
   with open(f"resources/norm_{filename}.txt") as file:
     return file.read()
-
 
 def average_length(text: str):
   words = text.split(' ')
