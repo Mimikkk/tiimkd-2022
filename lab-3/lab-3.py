@@ -77,12 +77,14 @@ if __name__ == '__main__':
     readfile, map(lambda x: f"sample{x}", range(6))
   )
 
-  locale: str
-  language: str
   words_bit_entropy_mins = defaultdict(float)
   words_bit_entropy_maxes = defaultdict(float)
   letters_bit_entropy_mins = defaultdict(float)
   letters_bit_entropy_maxes = defaultdict(float)
+  locale: str
+  language: str
+  mins: defaultdict[float]
+  maxes: defaultdict[float]
   for (locale, language) in locale_to_language_map.items():
     text: str = locals()[f"{language}_text"]
     print(f"Conditional entropy of {language.capitalize()}.")
@@ -104,7 +106,7 @@ if __name__ == '__main__':
     maxes = locals()[f"{kind}_bit_entropy_maxes"]
     print(
       f"Min/Max bit entropies ({kind}) of given language:",
-      *map(lambda x: f"- {x[0]}-degree: {x[1]:.2f} - {x[2]:.2f}.", zip(degrees, mins, maxes)),
+      *map(lambda x: f"- {x[0]}-degree: {x[1]:.2f} - {x[2]:.2f}.", zip(degrees, mins.values(), maxes.values())),
       sep='\n'
     )
 
@@ -112,16 +114,16 @@ if __name__ == '__main__':
   print("2b. Is given sample a natural language?")
   for i in range(6):
     print(f"Sample nr. '{i}'.")
-    sample_text: str = locals()[f"sample_{i}_text"]
-    print(f"- Sample: {sample_text[:100].strip()}...")
+    text: str = locals()[f"sample_{i}_text"]
+    print(f"- Sample: {text[:100].strip()}...")
 
     for kind in kinds:
       mins = locals()[f"{kind}_bit_entropy_mins"]
       maxes = locals()[f"{kind}_bit_entropy_maxes"]
 
       for degree in degrees:
-        words_probabilities = []
-        value = conditional_bit_entropy(words_probabilities, degree=degree)
+        probabilities = []
+        value = conditional_bit_entropy(probabilities, degree=degree)
         if about_between(value, mins[degree], maxes[degree]):
           print(f"- {degree}-degree ({kind}): It appears it may be a natural language.")
         else:
