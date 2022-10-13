@@ -38,6 +38,7 @@ def bit_entropy(probability: float | Iterable[float]) -> float:
   return entropy(probability, base=2)
 
 def conditional_entropy(probability: float | Iterable[float], *, degree: int, base: int) -> float:
+  if (degree == 0): return entropy(probability, base=base)
   return 0
 
 def conditional_bit_entropy(probability: float | Iterable[float], *, degree: int) -> float:
@@ -56,13 +57,18 @@ locale_to_language_map = {
   'nv': 'navajo',
 }
 
-degrees = (1, 2, 3, 4, 5)
+def about_between(value: float, min: float, max: float, *, modifier: float = 1) -> bool:
+  return min * (1 - modifier) <= value <= max * (1 + modifier)
+
+degrees = (1, 2)
+kinds = ("words", "letters")
 if __name__ == '__main__':
+  print(globals())
   print(f"1. Entropy.")
   print(f"Entropy of a english alphanumeric alphabet: {bit_entropy(alphabet_weights.values()):.2f}")
 
   print()
-  print(f"2. Language recognition.")
+  print(f"2a. Language entropy.")
   (english_text, esperanto_text, estonian_text, somali_text, haitian_text, latin_text, navajo_text) = map(
     readfile, map(lambda x: f"wiki_{x}", locale_to_language_map)
   )
@@ -73,37 +79,51 @@ if __name__ == '__main__':
 
   locale: str
   language: str
-  bit_entropy_averages = defaultdict(float)
+  words_bit_entropy_mins = defaultdict(float)
+  words_bit_entropy_maxes = defaultdict(float)
+  letters_bit_entropy_mins = defaultdict(float)
+  letters_bit_entropy_maxes = defaultdict(float)
   for (locale, language) in locale_to_language_map.items():
     text: str = locals()[f"{language}_text"]
     print(f"Conditional entropy of {language.capitalize()}.")
     print(f"- Sample of the language: {text[:100].strip()}...")
-    for degree in degrees:
-      probabilities = []
-      entropy_value = conditional_bit_entropy(probabilities, degree=degree)
-      bit_entropy_averages[degree] += entropy_value
-      print(f"- Degree {degree} bit entropy {entropy_value}.")
-    print()
-  for degree in bit_entropy_averages: bit_entropy_averages[degree] /= len(locale_to_language_map)
+    for kind in kinds:
+      mins = locals()[f"{kind}_bit_entropy_mins"]
+      maxes = locals()[f"{kind}_bit_entropy_maxes"]
+      for degree in degrees:
+        probabilities = []
+        value = conditional_bit_entropy(probabilities, degree=degree)
+        mins[degree] = min(mins[degree], value)
+        maxes[degree] = max(maxes[degree], value)
 
-  print(
-    f"Average bit entropies of given languages are:",
-    *map(lambda x: f"- Degree {x[0]}: {x[1]:.2f}.", bit_entropy_averages.items()),
-    sep='\n'
-  )
+        print(f"  - {degree}-degree conditional bit entropy ({kind}): {value:.2f}")
+    print()
+
+  for kind in kinds:
+    mins = locals()[f"{kind}_bit_entropy_mins"]
+    maxes = locals()[f"{kind}_bit_entropy_maxes"]
+    print(
+      f"Min/Max bit entropies ({kind}) of given language:",
+      *map(lambda x: f"- {x[0]}-degree: {x[1]:.2f} - {x[2]:.2f}.", zip(degrees, mins, maxes)),
+      sep='\n'
+    )
 
   print()
-  print("2. Is given sample a natural language?")
+  print("2b. Is given sample a natural language?")
   for i in range(6):
     print(f"Sample nr. '{i}'.")
     sample_text: str = locals()[f"sample_{i}_text"]
     print(f"- Sample: {sample_text[:100].strip()}...")
 
-    for degree in degrees:
-      print(f"- Degree {degree}.")
-      probabilities = []
-      if (conditional_bit_entropy(probabilities, degree=1) > 0):
-        print(f"  - It appears it may be a natural language.")
-      else:
-        print(f"  - It may be not a natural language.")
+    for kind in kinds:
+      mins = locals()[f"{kind}_bit_entropy_mins"]
+      maxes = locals()[f"{kind}_bit_entropy_maxes"]
+
+      for degree in degrees:
+        words_probabilities = []
+        value = conditional_bit_entropy(words_probabilities, degree=degree)
+        if about_between(value, mins[degree], maxes[degree]):
+          print(f"- {degree}-degree ({kind}): It appears it may be a natural language.")
+        else:
+          print(f"- {degree}-degree ({kind}): It may be not a natural language.")
     print()
