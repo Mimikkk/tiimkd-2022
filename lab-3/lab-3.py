@@ -63,7 +63,6 @@ def about_between(value: float, min: float, max: float, *, modifier: float = 1) 
 degrees = (1, 2)
 kinds = ("words", "letters")
 if __name__ == '__main__':
-  print(globals())
   print(f"1. Entropy.")
   print(f"Entropy of a english alphanumeric alphabet: {bit_entropy(alphabet_weights.values()):.2f}")
 
