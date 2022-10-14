@@ -24,28 +24,57 @@ def ith(n: int) -> int:
 def flatten(iterable: Iterable[Iterable]):
   return [item for sublist in iterable for item in sublist]
 
+def about_between(value: float, min: float, max: float, *, modifier: float = 0) -> bool:
+  return min * (1 - modifier) <= value <= max * (1 + modifier)
+
 def normalize(weights: dict):
   total = sum(weights.values())
   for key in weights: weights[key] /= total
   return weights
 
-def entropy(probability: float | Iterable[float], *, base: int) -> float:
+def entropy(probability: float | Iterable[float] | dict[str, float], *, base: int) -> float:
+  if isinstance(probability, dict):
+    return entropy(probability.values(), base=base)
   if isinstance(probability, Iterable):
-    return sum(map(bit_entropy, probability))
+    return sum(map(lambda x: entropy(x, base=base), probability))
   return -probability * math.log(probability, base)
 
-def bit_entropy(probability: float | Iterable[float]) -> float:
+def bit_entropy(probability: float | Iterable[float] | dict[str, float]) -> float:
   return entropy(probability, base=2)
 
-def conditional_entropy(probability: float | Iterable[float], *, degree: int, base: int) -> float:
-  if (degree == 0): return entropy(probability, base=base)
-  return 0
+def conditional_entropy(weights, conditional_weights, *, base: int) -> float:
+  return -sum(
+    weights[(*x, y)] * math.log(probability, base)
+    for (x, conditions) in conditional_weights.items()
+    for (y, probability) in conditions.items()
+  )
 
-def conditional_bit_entropy(probability: float | Iterable[float], *, degree: int) -> float:
-  return conditional_entropy(probability, degree=degree, base=2)
+def conditional_bit_entropy(weights, conditional_weights) -> float:
+  return conditional_entropy(weights, conditional_weights, base=2)
+
+def create_ngram_weights(text: str, degree: int, *, kind: Literal['letters', 'words']):
+  items = text if kind == 'letters' else text.split(' ')
+  if degree == 0: return normalize(Counter(items))
+  return normalize(Counter(tuple(items[i:i + degree]) for i in range(len(items) - degree + 1)))
+
+def calculate_conditional_weights(text, degree, *, kind: Literal['letters', 'words']):
+  if degree == 0: return create_ngram_weights(text, degree, kind=kind)
+  conditional_weights = {}
+  ngrams = create_ngram_weights(text, degree, kind=kind)
+  next_ngrams = create_ngram_weights(text, degree + 1, kind=kind)
+
+  for ngram in next_ngrams:
+    (main, last) = (ngram[:-1], ngram[-1])
+
+    if main not in conditional_weights: conditional_weights[main] = {}
+    conditional_weights[main][last] = next_ngrams[ngram] / ngrams[main]
+
+  for weights in conditional_weights.values(): normalize(weights)
+
+  return conditional_weights
 
 alphabet = 'abcdefghijklmnopqrstuvwxyz 12334567890'
-alphabet_weights = normalize(Counter(alphabet))
+alphabet_weights = create_ngram_weights(alphabet, 0, kind="letters")
 
 locale_to_language_map = {
   'en': 'english',
@@ -57,14 +86,11 @@ locale_to_language_map = {
   'nv': 'navajo',
 }
 
-def about_between(value: float, min: float, max: float, *, modifier: float = 1) -> bool:
-  return min * (1 - modifier) <= value <= max * (1 + modifier)
-
-degrees = (1, 2)
+degrees = (1, 2, 3, 4)
 kinds = ("words", "letters")
 if __name__ == '__main__':
   print(f"1. Entropy.")
-  print(f"Entropy of a english alphanumeric alphabet: {bit_entropy(alphabet_weights.values()):.2f}")
+  print(f"Entropy of a english alphanumeric alphabet: {bit_entropy(alphabet_weights):.2f}")
 
   print()
   print(f"2a. Language entropy.")
@@ -76,9 +102,9 @@ if __name__ == '__main__':
     readfile, map(lambda x: f"sample{x}", range(6))
   )
 
-  words_bit_entropy_mins = defaultdict(float)
+  words_bit_entropy_mins = defaultdict(lambda: float('inf'))
   words_bit_entropy_maxes = defaultdict(float)
-  letters_bit_entropy_mins = defaultdict(float)
+  letters_bit_entropy_mins = defaultdict(lambda: float('inf'))
   letters_bit_entropy_maxes = defaultdict(float)
   locale: str
   language: str
@@ -92,8 +118,9 @@ if __name__ == '__main__':
       mins = locals()[f"{kind}_bit_entropy_mins"]
       maxes = locals()[f"{kind}_bit_entropy_maxes"]
       for degree in degrees:
-        probabilities = []
-        value = conditional_bit_entropy(probabilities, degree=degree)
+        weights = create_ngram_weights(text, degree + 1, kind=kind)
+        conditional_weights = calculate_conditional_weights(text, degree, kind=kind)
+        value = conditional_bit_entropy(weights, conditional_weights)
         mins[degree] = min(mins[degree], value)
         maxes[degree] = max(maxes[degree], value)
 
@@ -120,11 +147,20 @@ if __name__ == '__main__':
       mins = locals()[f"{kind}_bit_entropy_mins"]
       maxes = locals()[f"{kind}_bit_entropy_maxes"]
 
+      valid_count = 0
       for degree in degrees:
-        probabilities = []
-        value = conditional_bit_entropy(probabilities, degree=degree)
+        weights = create_ngram_weights(text, degree + 1, kind=kind)
+        conditional_weights = calculate_conditional_weights(text, degree, kind=kind)
+        value = conditional_bit_entropy(weights, conditional_weights)
+        print(f"  - {degree}-degree conditional bit entropy ({kind}): {value:.2f}.")
+
         if about_between(value, mins[degree], maxes[degree]):
-          print(f"- {degree}-degree ({kind}): It appears it may be a natural language.")
+          valid_count += 1
+          print(f"- {degree}-degree ({kind}): Is within acceptable range.")
         else:
-          print(f"- {degree}-degree ({kind}): It may be not a natural language.")
+          print(f"- {degree}-degree ({kind}): Is not within acceptable range.")
+      if valid_count / len(degrees) >= 0.5:
+        print(f"  - ({kind}): It appears it may be a natural language.")
+      else:
+        print(f"  - ({kind}): It may be not a natural language.")
     print()
