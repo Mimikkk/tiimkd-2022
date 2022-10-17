@@ -55,6 +55,7 @@ if __name__ == '__main__':
   print()
   print("1. Zero degree.")
   gibberish_text = ''.join(generate_letters(n=10000, weights=alphabet_weights))
+  print(f"Gibberish: {gibberish_text[:100]}...")
   print(f"Average gibberish word length: {average_length(gibberish_text)}")
 
   text = readfile('hamlet')
@@ -87,6 +88,6 @@ if __name__ == '__main__':
     weights = calculate_conditional_weights(text, degree)
     n_degree_text = create_markov_chain_sentences(n=10000, degree=degree, start='probability', weights=weights)
 
-    print(f"Generated text: {n_degree_text}")
+    print(f"Generated text: {n_degree_text[:100]}...")
     print(f"Average word length: {average_length(n_degree_text)}")
     print()

@@ -1,9 +1,6 @@
-from collections import Counter, OrderedDict, defaultdict
-import operator
+from collections import Counter
 import random
 from typing import Iterable, Literal
-
-import numpy as np
 
 def readfile(filename: Literal['hamlet', 'romeo', 'wiki_sample']):
   with open(f"resources/norm_{filename}.txt") as file:
