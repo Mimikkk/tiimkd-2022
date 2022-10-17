@@ -16,9 +16,10 @@ def readfile(filename: str) -> str:
   with open(filename, 'r') as file:
     return file.read()
 
-def encode(text, encoding: dict[str, str]):
+def encode(text: str, encoding: dict[str, str]):
   encoded = bitarray()
-  for letter in map(encoding.__getitem__, text): encoded.extend(letter)
+  for letter in map(encoding.__getitem__, text):
+    encoded.extend(letter)
 
   filling = (len(encoded) + 3) % 8
   offset = 8 - filling if filling != 0 else 0
@@ -28,12 +29,14 @@ def encode(text, encoding: dict[str, str]):
 
   return encoded
 
-def decode(encoded, decoding: dict[str, str]):
+def decode(encoded: bitarray, decoding: dict[str, str]):
   decoded = ''
   code_length = len(tuple(decoding)[0])
 
-  offset = int(encoded[:3].to01(), 2)
-  for i in range(3, len(encoded) - offset, code_length): decoded += decoding[encoded[i:i + code_length].to01()]
+  position = 3
+  offset = int(encoded[:position].to01(), 2)
+  for i in range(position, len(encoded) - offset, code_length):
+    decoded += decoding[encoded[i:i + code_length].to01()]
   return decoded
 
 def save(encoded: bitarray, code: str, name: str):
@@ -60,9 +63,9 @@ def verify():
     encoded = encode(original, create_encoding(code))
     decoded = decode(encoded, create_decoding(code))
     assert original == decoded
-    print('Encoding and decoding algorithm is correct')
+    print('Encoding and decoding is correct')
   except AssertionError:
-    print('Encoding and decoding algorithm is incorrect')
+    print('Encoding and decoding is incorrect')
 
 if __name__ == '__main__':
   verify()
@@ -74,7 +77,6 @@ if __name__ == '__main__':
   decoding = create_decoding(code)
   encoded = encode(original, create_encoding(code))
   save(encoded, code, filename)
-  print(f"Encoded text:  {encoded[:100]}...")
 
   encoded, code = load(filename)
   decoded = decode(encoded, create_decoding(code))
