@@ -2,13 +2,11 @@ from collections import defaultdict
 import math
 from typing import Iterable, Literal, Counter
 
-from numpy.core.defchararray import strip
-
 def readfile(filename: Literal[
   'wiki_en', 'wiki_eo', 'wiki_et', 'wiki_ht', 'wiki_la', 'wiki_nv', 'wiki_so',
   'sample0', 'sample1', 'sample2', 'sample3', 'sample4', 'sample5'
 ]):
-  if (filename.startswith('wiki')):
+  if filename.startswith('wiki'):
     return readfile(f"norm_{filename}")
 
   with open(f"resources/{filename}.txt") as file:
@@ -54,8 +52,8 @@ def conditional_bit_entropy(weights, conditional_weights) -> float:
 
 def create_ngram_weights(text: str, degree: int, *, kind: Literal['letters', 'words']):
   items = text if kind == 'letters' else text.split(' ')
-  if degree == 0: return normalize(Counter(items))
-  return normalize(Counter(tuple(items[i:i + degree]) for i in range(len(items) - degree + 1)))
+  if degree == 0: return normalize(Counter[any](items))
+  return normalize(Counter[any](tuple(items[i:i + degree]) for i in range(len(items) - degree + 1)))
 
 def calculate_conditional_weights(text, degree, *, kind: Literal['letters', 'words']):
   if degree == 0: return create_ngram_weights(text, degree, kind=kind)
