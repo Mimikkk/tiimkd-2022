@@ -1,50 +1,14 @@
 from collections import Counter
 import math
-from typing import Iterable
+from typing import Iterable, Literal
 
 from bitarray import bitarray
 import operator
 
 alphanumeric = ' abcdefghijklmnopqrstuvwxyz0123456789'
 
-class Tree(object):
-  def __init__(self, label=None, prob=None, left=None, right=None):
-    self.left = left
-    self.right = right
-    self.label = label if not left and not right else left.label + right.label
-    self.probability = prob if not left and not right else left.probability + right.probability
-    self.isLeaf = not left and not right
-
-  def __repr__(self):
-    if self.isLeaf:
-      return f'"{self.label}": {self.probability}'
-    return f'"{self.label}": {{{self.left}, {self.right}}}'
-
-class TreeList(object):
-  def __init__(self, trees: list[Tree]):
-    self.inner = sorted(trees, key=lambda x: x.probability)
-
-  def append(self, tree: Tree):
-    self.inner.append(tree)
-    self.inner.sort(key=lambda x: x.probability)
-
-  def __len__(self):
-    return len(self.inner)
-
-  def pop(self, index: int) -> Tree:
-    return self.inner.pop(index)
-
-  def __getitem__(self, index: int) -> Tree:
-    return self.inner[index]
-
-  def __str__(self):
-    return ' '.join(self.inner)
-
-  def __repr__(self):
-    return self.inner
-
-def readfile(filename: str) -> str:
-  with open(filename, 'r') as file:
+def readfile(filename: str, mode: Literal['r', 'rb', 'r+b'] = 'r') -> str:
+  with open(filename, mode) as file:
     return file.read()
 
 def normalize(weights: dict[str, float]) -> dict[str, float]:
@@ -59,34 +23,60 @@ def calculate_entropy(probability: float | Iterable[float] | dict[str, float], *
     return sum(map(lambda x: calculate_entropy(x, base=base), probability))
   return -probability * math.log(probability, base)
 
-def create_encoding_recursively(tree: Tree, encoding: dict[str, int], key: str):
-  if tree.isLeaf:
-    encoding[tree.label] = key
-    return
-  else:
-    key += '0'
-    create_encoding_recursively(tree.left, encoding, key)
-    key = key[:-1] + '1'
-    create_encoding_recursively(tree.right, encoding, key)
+def calculate_average_length(weights: dict[str, float], encoding: dict[str, str]):
+  return sum(map(lambda x: len(encoding[x]) * weights[x], weights))
 
-def create_tree(weights: dict[str, float]):
-  trees = TreeList([Tree(key, value) for key, value in weights.items()])
-  while (len(trees) != 1):
-    trees.append(Tree(left=trees.pop(0), right=trees.pop(0)))
-  return trees[0]
+def create_weights(text: str):
+  return normalize(Counter(text))
 
-def create_sorted_letter_weights(text: str):
-  letters = normalize(Counter(text))
-  return dict(sorted(letters.items(), key=operator.itemgetter(1), reverse=False))
+def create(weights: dict[str, float]) -> dict[str, float]:
+  sorted_weights = dict(sorted(weights.items(), key=operator.itemgetter(1), reverse=False))
+  class Node(object):
+    def __init__(self, label=None, probability=None, left=None, right=None):
+      self.left = left
+      self.right = right
+      self.is_leaf = not left and not right
 
-def create(weights: dict[str, float]) -> tuple[dict[str, str], dict[str, str]]:
+      if self.is_leaf:
+        self.label = label
+        self.probability = probability
+      else:
+        self.label = left.label + right.label
+        self.probability = left.probability + right.probability
+
+    @classmethod
+    def from_weights(cls, weights: dict[str, float]):
+      return cls.from_items(weights.items())
+
+    @classmethod
+    def from_items(cls, items: Iterable[tuple[str, float]]):
+      return cls.from_nodes(map(lambda x: cls(*x), items))
+
+    @classmethod
+    def from_nodes(cls, nodes: Iterable['Node']):
+      nodes = list(nodes)
+      while len(nodes) > 1:
+        nodes.sort(key=lambda x: x.probability)
+        nodes = [cls(left=nodes[0], right=nodes[1])] + nodes[2:]
+      return nodes[0]
+
   encoding = {}
-  create_encoding_recursively(create_tree(weights), encoding, '')
-  decoding = {value: key for key, value in encoding.items()}
-  return encoding, decoding
+  stack = [(Node.from_weights(sorted_weights), '')]
+  while stack:
+    node, key = stack.pop()
+
+    if node.is_leaf:
+      encoding[node.label] = key
+    else:
+      stack.extend(((node.right, f"{key}1"), (node.left, f"{key}0")))
+
+  return ':'.join(map(''.join, encoding.items()))
 
 def create_encoding(code: str) -> dict[str, str]:
-  return
+  encoding = {}
+  for (key, value) in map(lambda x: (x[0], x[1:]), code.split(':')):
+    encoding[key] = value
+  return encoding
 
 def create_decoding(code: str) -> dict[str, str]:
   return {v: k for (k, v) in create_encoding(code).items()}
@@ -119,34 +109,25 @@ def decode(encoded: bitarray, decoding: dict[str, str]):
 
   return decoded
 
-def save(encoded: bitarray, encoding: dict[str, str], name: str):
+def save(encoded: bitarray, code: str, name: str):
   with open(f"results/{name}.encoded", 'wb') as file:
     file.write(encoded.tobytes())
 
   with open(f"results/{name}.code", 'w') as file:
-    for key, value in encoding.items():
-      file.write(key + value + "\n")
+    file.write(code)
 
 def load(name: str):
-  with open(f'results/{name}.encoded', 'rb') as file:
-    encoded = bitarray()
-    encoded.frombytes(file.read())
-
-  encoding = {}
-  with open(f'results/{name}.code', 'r') as file:
-    for line in file.readlines():
-      s = line.replace('\n', '')
-      encoding[s[0]] = s[1:]
-
-  decoding = {value: key for key, value in encoding.items()}
-  return encoded, encoding, decoding
+  (encoded := bitarray()).frombytes(readfile(f'results/{name}.encoded', 'rb'))
+  code = readfile(f'results/{name}.code')
+  return encoded, code
 
 def verify():
   try:
     text = 'text to verify correctness of encoding and decoding algorithm'
-    encoding, decoding = create(create_sorted_letter_weights(text))
-    encoded = encode(text, encoding)
-    decoded = decode(encoded, decoding)
+    weights = create_weights(text)
+    code = create(weights)
+    encoded = encode(text, create_encoding(code))
+    decoded = decode(encoded, create_decoding(code))
     assert text == decoded
     print('Encoding and decoding is correct')
   except AssertionError:
@@ -154,27 +135,28 @@ def verify():
 
 if __name__ == '__main__':
   verify()
-  print()
 
-  text = readfile('resources/norm_wiki_sample.txt')
-
-  weights = create_sorted_letter_weights(text)
+  original = readfile('resources/norm_wiki_sample.txt')
+  weights = create_weights(original)
   entropy = calculate_entropy(weights, base=2)
+
+  print()
   print(f'Entropy (letters): {entropy}')
   bits = 6
   print(f'Average code length: {bits} bits')
   print(f'Coding effectivity from the previous laboratory: {entropy / bits * 100:.2f}%')
 
-  weights = create_sorted_letter_weights(text)
-  encoding, decoding = create(weights)
-
-  average_length = sum(len(key) * weights[v] for v, key in encoding.items())
+  weights = create_weights(original)
+  code = create(weights)
+  encoding = create_encoding(code)
+  average_length = calculate_average_length(weights, encoding)
   print()
   print(f"Average code length: {average_length:.2f} bits")
   print(f'Coding effectivity: {entropy / average_length * 100:.2f}%')
 
-  encoded = encode(text, encoding)
-  save(encoded, encoding, 'test')
-
-  encoded, encoding, decoding = load('test')
-  decoded = decode(encoded, decoding)
+  encoded = encode(original, encoding)
+  save(encoded, code, 'test')
+  encoded, code = load('test')
+  decoded = decode(encoded, create_decoding(code))
+  print(f"Original text is: {original[:100]}...")
+  print(f"Decoded text is:  {decoded[:100]}...")
