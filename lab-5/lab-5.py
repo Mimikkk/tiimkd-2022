@@ -40,7 +40,7 @@ def create(weights: dict[str, float]) -> dict[str, float]:
       if self.is_leaf:
         self.label = label
         self.probability = probability
-      else:
+      elif left and right:
         self.label = left.label + right.label
         self.probability = left.probability + right.probability
 
@@ -68,15 +68,13 @@ def create(weights: dict[str, float]) -> dict[str, float]:
     if node.is_leaf:
       encoding[node.label] = key
     else:
-      stack.extend(((node.right, f"{key}1"), (node.left, f"{key}0")))
+      if node.left: stack.append((node.left, f'{key}0'))
+      if node.right: stack.append((node.right, f'{key}1'))
 
   return ':'.join(map(''.join, encoding.items()))
 
 def create_encoding(code: str) -> dict[str, str]:
-  encoding = {}
-  for (key, value) in map(lambda x: (x[0], x[1:]), code.split(':')):
-    encoding[key] = value
-  return encoding
+  return dict(map(lambda x: (x[0], x[1:]), code.split(':')))
 
 def create_decoding(code: str) -> dict[str, str]:
   return {v: k for (k, v) in create_encoding(code).items()}
