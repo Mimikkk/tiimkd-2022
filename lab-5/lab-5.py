@@ -139,16 +139,19 @@ if __name__ == '__main__':
   entropy = calculate_entropy(weights, base=2)
 
   print()
+  print("1. Coding effectivity.")
   print(f'Entropy (letters): {entropy}')
   bits = 6
   print(f'Average code length: {bits} bits')
   print(f'Coding effectivity from the previous laboratory: {entropy / bits * 100:.2f}%')
 
+  print()
+  print(f"2. Huffman encoding.")
+
   weights = create_weights(original)
   code = create(weights)
   encoding = create_encoding(code)
   average_length = calculate_average_length(weights, encoding)
-  print()
   print(f"Average code length: {average_length:.2f} bits")
   print(f'Coding effectivity: {entropy / average_length * 100:.2f}%')
 
