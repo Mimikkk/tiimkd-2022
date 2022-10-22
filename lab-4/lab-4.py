@@ -17,9 +17,7 @@ def readfile(filename: str) -> str:
     return file.read()
 
 def encode(text: str, encoding: dict[str, str]):
-  encoded = bitarray()
-  for letter in map(encoding.__getitem__, text):
-    encoded.extend(letter)
+  encoded = bitarray(''.join(map(encoding.get, text)))
 
   # It's to add extra space at the end of the encoding so its
   # length is a multiple of byte.
@@ -50,8 +48,7 @@ def save(encoded: bitarray, code: str, name: str):
 
 def load(name: str):
   with open(f"results/{name}.encoded", 'rb') as file:
-    encoded = bitarray()
-    encoded.fromfile(file)
+    (encoded := bitarray()).fromfile(file)
 
   with open(f"results/{name}.code", 'r') as file:
     code = file.read()

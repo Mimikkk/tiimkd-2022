@@ -80,9 +80,7 @@ def create_decoding(code: str) -> dict[str, str]:
   return {v: k for (k, v) in create_encoding(code).items()}
 
 def encode(text: str, encoding: dict[str, str]):
-  encoded = bitarray()
-  for letter in map(encoding.__getitem__, text):
-    encoded.extend(letter)
+  encoded = bitarray(''.join(map(encoding.get, text)))
 
   # It's to add extra space at the end of the encoding so its
   # length is a multiple of byte.
@@ -124,12 +122,11 @@ def load(name: str):
 
 def verify():
   try:
-    text = 'text to verify correctness of encoding and decoding algorithm'
-    weights = create_weights(text)
-    code = create(weights)
-    encoded = encode(text, create_encoding(code))
+    original = 'test text'
+    code = create(Counter(original))
+    encoded = encode(original, create_encoding(code))
     decoded = decode(encoded, create_decoding(code))
-    assert text == decoded
+    assert original == decoded
     print('Encoding and decoding is correct')
   except AssertionError:
     print('Encoding and decoding is incorrect')
