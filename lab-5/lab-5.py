@@ -84,6 +84,8 @@ def encode(text: str, encoding: dict[str, str]):
   for letter in map(encoding.__getitem__, text):
     encoded.extend(letter)
 
+  # It's to add extra space at the end of the encoding so its
+  # length is a multiple of byte.
   filling = (len(encoded) + 3) % 8
   offset = 8 - filling if filling != 0 else 0
   code_offset = bitarray(bin(offset)[2:].zfill(3))
@@ -94,6 +96,7 @@ def encode(text: str, encoding: dict[str, str]):
 def decode(encoded: bitarray, decoding: dict[str, str]):
   min_code_len = min(map(len, decoding))
 
+  # It's to prevent extra symbols from the overflow of the last byte.
   position = 3
   offset = int(encoded[:position].to01(), 2)
   decoded = ''
@@ -156,8 +159,9 @@ if __name__ == '__main__':
   print(f'Coding effectivity: {entropy / average_length * 100:.2f}%')
 
   encoded = encode(original, encoding)
-  save(encoded, code, 'test')
-  encoded, code = load('test')
+  filename = 'test'
+  save(encoded, code, filename)
+  encoded, code = load(filename)
   decoded = decode(encoded, create_decoding(code))
   print(f"Original text is: {original[:100]}...")
   print(f"Decoded text is:  {decoded[:100]}...")

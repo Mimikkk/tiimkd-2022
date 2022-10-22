@@ -21,6 +21,8 @@ def encode(text: str, encoding: dict[str, str]):
   for letter in map(encoding.__getitem__, text):
     encoded.extend(letter)
 
+  # It's to add extra space at the end of the encoding so its
+  # length is a multiple of byte.
   filling = (len(encoded) + 3) % 8
   offset = 8 - filling if filling != 0 else 0
   code_offset = bitarray(bin(offset)[2:].zfill(3))
@@ -32,6 +34,7 @@ def decode(encoded: bitarray, decoding: dict[str, str]):
   decoded = ''
   code_length = len(tuple(decoding)[0])
 
+  # It's to prevent extra symbol from the overflow of the last byte.
   position = 3
   offset = int(encoded[:position].to01(), 2)
   for i in range(position, len(encoded) - offset, code_length):
@@ -68,8 +71,7 @@ def verify():
 
 if __name__ == '__main__':
   verify()
-  original = readfile('resources/norm_wiki_sample.txt')
-  print(f"original text: {original[:100]}...")
+  original = readfile('resources/norm_wiki_sample.txt')[:80000]
 
   filename = 'test'
   code = create(Counter(original))
@@ -79,4 +81,18 @@ if __name__ == '__main__':
 
   encoded, code = load(filename)
   decoded = decode(encoded, create_decoding(code))
+  assert original == decoded
+
+  print()
+  print(f"original text: {original[:100]}...")
   print(f"Decoded text:  {decoded[:100]}...")
+
+  print()
+  print("1. Binary encoding.")
+  print("Shortest code for text having 37 symobls is 6 bits. (ceil(log2(37))")
+  print(f"Compression ration: 8/6 = 1.3(3)")
+  original_size = len(original) * 8
+  encoded_size = len(encoded)
+  print(f"Original size: {original_size} bits")
+  print(f"Encoded size: {encoded_size} bits")
+  print(f"Compression ratio: {original_size / encoded_size:.2f}")
