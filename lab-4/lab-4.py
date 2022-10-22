@@ -23,7 +23,6 @@ def encode(text: str, encoding: dict[str, str]):
 
   filling = (len(encoded) + 3) % 8
   offset = 8 - filling if filling != 0 else 0
-
   code_offset = bitarray(bin(offset)[2:].zfill(3))
   encoded = code_offset + encoded
 

@@ -134,7 +134,7 @@ def verify():
 if __name__ == '__main__':
   verify()
 
-  original = readfile('resources/norm_wiki_sample.txt')
+  original = readfile('resources/norm_wiki_sample.txt')[:80000]
   weights = create_weights(original)
   entropy = calculate_entropy(weights, base=2)
 
