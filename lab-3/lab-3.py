@@ -41,6 +41,8 @@ def bit_entropy(probability: float | Iterable[float] | dict[str, float]) -> floa
   return entropy(probability, base=2)
 
 def conditional_entropy(weights, conditional_weights, *, base: int) -> float:
+  if len(next(iter(weights))) == 1:
+    return entropy(weights, base=base)
   return -sum(
     weights[(*x, y)] * math.log(probability, base)
     for (x, conditions) in conditional_weights.items()
@@ -51,7 +53,7 @@ def conditional_bit_entropy(weights, conditional_weights) -> float:
   return conditional_entropy(weights, conditional_weights, base=2)
 
 def create_ngram_weights(text: str, degree: int, *, kind: Literal['letters', 'words']):
-  items = text if kind == 'letters' else text.split(' ')
+  items = text if kind == 'letters' else text.split()
   if degree == 0: return normalize(Counter[any](items))
   return normalize(Counter[any](tuple(items[i:i + degree]) for i in range(len(items) - degree + 1)))
 
@@ -66,8 +68,6 @@ def calculate_conditional_weights(text, degree, *, kind: Literal['letters', 'wor
 
     if main not in conditional_weights: conditional_weights[main] = {}
     conditional_weights[main][last] = next_ngrams[ngram] / ngrams[main]
-
-  for weights in conditional_weights.values(): normalize(weights)
 
   return conditional_weights
 
@@ -84,16 +84,16 @@ locale_to_language_map = {
   'nv': 'navajo',
 }
 
-degrees = (1, 2, 3, 4)
+degrees = (0, 1, 2, 3, 4)
 kinds = ("words", "letters")
 if __name__ == '__main__':
   print(f"1. Entropy.")
   print(f"Entropy of a english alphanumeric alphabet: {bit_entropy(alphabet_weights):.2f}")
 
-  print()
   print(f"2a. Language entropy.")
   (english_text, esperanto_text, estonian_text, somali_text, haitian_text, latin_text, navajo_text) = map(
-    readfile, map(lambda x: f"wiki_{x}", locale_to_language_map)
+    lambda text: text[:80_000],
+    map(readfile, map(lambda x: f"wiki_{x}", locale_to_language_map))
   )
 
   (sample_0_text, sample_1_text, sample_2_text, sample_3_text, sample_4_text, sample_5_text) = map(
@@ -138,7 +138,7 @@ if __name__ == '__main__':
   print("2b. Is given sample a natural language?")
   for i in range(6):
     print(f"Sample nr. '{i}'.")
-    text: str = locals()[f"sample_{i}_text"]
+    text: str = locals()[f"sample_{i}_text"][:80_000]
     print(f"- Sample: {text[:100].strip()}...")
 
     for kind in kinds:

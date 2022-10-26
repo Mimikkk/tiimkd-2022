@@ -52,6 +52,7 @@ def create_markov_chain_sentences(text: str, degree: int, *, k: int = 10, start:
   )
 
   weights = calculate_conditional_weights(text, degree)
+  print(weights)
 
   result = ngram.copy()
 
@@ -72,7 +73,7 @@ if __name__ == '__main__':
   print(f"10 Most common words: {', '.join(map(ith(1), words.most_common(10)))}")
   print(f"30k Percentage of total: {sum(map(ith(2), words.most_common(30_000))) / words.total() * 100:.2f}%")
   print(f"6k Percentage of total: {sum(map(ith(2), words.most_common(6_000))) / words.total() * 100:.2f}%")
-
+  print(words.most_common(10))
   print()
   print("2. First degree approximations.")
   hamlet_ngrams = create_ngram_probabilities(hamlet_text, 1)

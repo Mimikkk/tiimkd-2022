@@ -10,7 +10,7 @@ def create_encoding(code: str) -> dict[str, str]:
   return {letter: f"{i:0{required_bits}b}" for (i, letter) in enumerate(code)}
 
 def create_decoding(code: str) -> dict[str, str]:
-  return {v: k for (k, v) in create_encoding(code).items()}
+  return dict(map(reversed, create_encoding(code).items()))
 
 def readfile(filename: str) -> str:
   with open(filename, 'r') as file:
@@ -59,8 +59,8 @@ def verify():
   try:
     original = 'test text'
     code = create(Counter(original))
-    encoded = encode(original, create_encoding(code))
-    decoded = decode(encoded, create_decoding(code))
+    encoded = encode(original, enc:=create_encoding(code))
+    decoded = decode(encoded, dec:=create_decoding(code))
     assert original == decoded
     print('Encoding and decoding is correct')
   except AssertionError:
@@ -87,7 +87,7 @@ if __name__ == '__main__':
   print()
   print("1. Binary encoding.")
   print("Shortest code for text having 37 symobls is 6 bits. (ceil(log2(37))")
-  print(f"Compression ration: 8/6 = 1.3(3)")
+  print(f"Compression ratio: 8/6 = 1.3(3)")
   original_size = len(original) * 8
   encoded_size = len(encoded)
   print(f"Original size: {original_size} bits")

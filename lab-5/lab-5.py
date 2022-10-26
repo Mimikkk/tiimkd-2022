@@ -46,15 +46,7 @@ def create(weights: dict[str, float]) -> dict[str, float]:
 
     @classmethod
     def from_weights(cls, weights: dict[str, float]):
-      return cls.from_items(weights.items())
-
-    @classmethod
-    def from_items(cls, items: Iterable[tuple[str, float]]):
-      return cls.from_nodes(map(lambda x: cls(*x), items))
-
-    @classmethod
-    def from_nodes(cls, nodes: Iterable['Node']):
-      nodes = list(nodes)
+      nodes = list(map(lambda x: cls(*x), weights.items()))
       while len(nodes) > 1:
         nodes.sort(key=lambda x: x.probability)
         nodes = [cls(left=nodes[0], right=nodes[1])] + nodes[2:]
@@ -142,7 +134,7 @@ if __name__ == '__main__':
   print("1. Coding effectivity.")
   print(f'Entropy (letters): {entropy}')
   bits = 6
-  print(f'Average code length: {bits} bits')
+  print(f'Previous lab average code length: {bits} bits')
   print(f'Coding effectivity from the previous laboratory: {entropy / bits * 100:.2f}%')
 
   print()

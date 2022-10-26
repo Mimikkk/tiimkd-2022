@@ -127,10 +127,10 @@ def verify():
   except AssertionError:
     print('Encoding and decoding is incorrect')
 
-sizes = ((None, "full"), (2 ** 10, f"{2 ** 10}"),)
+sizes = ((None, "full"), (2 ** 10, f"{2 ** 10}"), (2 ** 18, f"{2 ** 18}"))
 if __name__ == '__main__':
   filename = "norm_wiki_sample.txt"
-  original = readfile(f"resources/{filename}")[:800000]
+  original = readfile(f"resources/{filename}")
   print(f"Size before compression: {format_size(len(original) * 8)}.")
 
   for (size, subdir) in sizes:
